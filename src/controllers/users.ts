@@ -1,0 +1,116 @@
+import { NextFunction, Request, Response } from "express";
+import bcrypt from 'bcryptjs';
+import User from "../models/user";
+import jwt from 'jsonwebtoken'
+
+const { JWT_SECRET = 'default' } = process.env;
+
+interface ICreateUserRequest {
+  name?: string;
+  about?: string;
+  avatar?: string;
+  email: string;
+  password: string;
+}
+
+interface IUpdateProfileRequest {
+  name: string;
+  about: string;
+}
+
+interface IUpdateAvatarRequest {
+  avatar: string;
+}
+
+interface ILoginRequest {
+  email : string,
+  password: string
+}
+
+export const getUsers = async (req : Request, res : Response) => {
+  const users = await User.find();
+
+  res.send(users);
+};
+
+export const getUserById = async (req : Request<{ userId: string }>, res : Response, next: NextFunction) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      const error = new Error('User not found');
+      (error as any).statusCode = 404;
+      throw error;
+    }
+    res.send(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const createUser = async (req:Request<{}, {}, ICreateUserRequest>, res : Response, next: NextFunction ) => {
+  try {
+    const { email, password, name, about, avatar } = req.body;
+
+    const hash = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password : hash
+    })
+
+    res.status(201).send(user)
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const updateUser = async (req : Request<{}, {}, IUpdateProfileRequest>, res : Response) => {
+  const user =  await User.findByIdAndUpdate(req.user!._id, {name : req.body.name, about: req.body.about}, {new : true, runValidators : true})
+
+  res.send(user)
+}
+
+export const udapteAvatar = async (req : Request<{}, {}, IUpdateAvatarRequest>, res : Response) => {
+  const user =  await User.findByIdAndUpdate(req.user!._id, {avatar : req.body.avatar}, {new : true, runValidators : true})
+
+  res.send(user);
+}
+
+export const login = async (req: Request<{}, {}, ILoginRequest>, res : Response, next : NextFunction) => {
+  try {
+    const {email, password} = req.body
+
+    const user = await User.findOne({ email })
+
+    if (!user) {
+      return res.status(401).send({ message : 'Wrong email or passwod'})
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password)
+
+    if (!isPasswordValid) {
+      return res.status(401).send({message : 'Wrong email or passwod'})
+    }
+
+    const token : string = jwt.sign(
+      {_id: user._id},
+      JWT_SECRET,
+      { expiresIn : '7d'}
+    )
+
+      res
+      .cookie('token', token, {
+        httpOnly : true,
+        sameSite : 'lax',
+        maxAge: 3600000 * 24 * 7,
+      })
+      .send({ message : "Successful login"})
+
+
+  } catch (e) {
+    next(e)
+  }
+}
