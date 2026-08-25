@@ -1,9 +1,14 @@
 import 'dotenv/config';
 import express, { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { createUser, getUserById, getUsers, login, udapteAvatar, updateUser } from './controllers/users';
+import { createUser, getCurrentUser, getUserById, getUsers, login, udapteAvatar, updateUser } from './controllers/users';
 import { createCard, deleteCard, dislikeCard, getCards, likeCard } from './controllers/cards';
 import cookieParser from 'cookie-parser';
+import auth from './middlewares/auth';
+import { requestLogger, errorLogger } from './middlewares/logger';
+import errorHandler from 'middlewares/errorHandler';
+import { validateSignIn, validateSignUp, validateUpdateAvatar, validateUpdateProfile, validateUserId } from 'validators/users';
+import { validateCardId, validateCreateCard } from 'validators/cards';
 
 const PORT = 3000;
 const DB_URL = 'mongodb://localhost:27017/mestodb'
@@ -14,27 +19,27 @@ app.listen(PORT, () => console.log("IM IN!!!"));
 app.use(express.json());
 app.use(cookieParser());
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-  req.user = {
-    _id: '6a8c85e0746081428f4066d2' // вставьте сюда _id созданного в предыдущем пункте пользователя
-  };
+app.use(requestLogger);
 
-  next();
-});
+app.post('/signin', validateSignIn, login)
+app.post('/signup', validateSignUp,createUser)
 
-app.post('/signin', login)
-app.post('/signup', createUser)
+app.use(auth);
 
-app.get('/users', getUsers)
-app.get('/users/:userId', getUserById)
-app.patch('/users/me', updateUser)
-app.patch('/users/me/avatar', udapteAvatar)
+app.get('/users/me', getCurrentUser);
+app.get('/users', getUsers);
+app.get('/users/:userId', validateUserId, getUserById);
+app.patch('/users/me', validateUpdateProfile, updateUser);
+app.patch('/users/me/avatar', validateUpdateAvatar, udapteAvatar);
 
-app.get('/cards', getCards)
-app.post('/cards', createCard)
-app.delete('/cards/:cardId', deleteCard)
-app.put('/cards/:cardId/likes', likeCard)
-app.delete('/cards/:cardId/likes', dislikeCard);
+app.get('/cards', getCards);
+app.post('/cards', validateCreateCard, createCard);
+app.delete('/cards/:cardId', validateCardId, deleteCard);
+app.put('/cards/:cardId/likes', validateCardId, likeCard);
+app.delete('/cards/:cardId/likes', validateCardId, dislikeCard);
+
+app.use(errorLogger);
+app.use(errorHandler);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const { name } = err;
@@ -42,13 +47,13 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (name === 'ValidationError') {
     return res
       .status(400)
-      .send({ message: err.message || 'Переданы некорректные данные' });
+      .send({ message: err.message || 'Validation error' });
   }
 
   if (name === 'CastError') {
     return res
       .status(400)
-      .send({ message: 'Передан некорректный _id' });
+      .send({ message: 'Wrong _id' });
   }
 
   if (err.statusCode === 404) {
@@ -59,7 +64,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
   return res
     .status(500)
-    .send({ message: 'На сервере произошла ошибка' });
+    .send({ message: 'Server error' });
 });
 
 mongoose.connect(DB_URL)

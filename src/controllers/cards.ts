@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Card from "../models/card";
 import { Types } from "mongoose";
+import { AppError } from "errors";
 
 interface ICreateCard {
   name : string;
@@ -27,13 +28,24 @@ export const getCards = async (req: Request, res: Response) => {
 
 export const deleteCard = async (req : Request<{cardId : string}>, res : Response, next: NextFunction) => {
   try {
-    const cardToDelete =  await Card.findByIdAndDelete(req.params.cardId);
-    if (!cardToDelete) {
-      const error = new Error('No card with such _id');
+
+    const card = await Card.findById(req.params.cardId)
+
+    if (!card) {
+      const error : any = new Error("There is no such card");
       (error as any).statusCode = 404;
-      throw error;
+      throw error
     }
-    res.send(cardToDelete)
+
+    const isNotOwner = card.owner.toString() !== req.user!._id.toString();
+
+    if (isNotOwner) {
+      return next(new AppError("You have no rights to delete this card", 403))
+    }
+
+    const cardToDelete = await Card.findByIdAndDelete(req.params.cardId)
+    res.send(cardToDelete);
+
   } catch (err) {
     next(err);
   }

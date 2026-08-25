@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { URL_REGEX } from "utils/urlRegex";
 import validator from 'validator'
 
 export interface IUser {
@@ -26,7 +27,11 @@ const userSchema = new mongoose.Schema({
     },
     avatar : {
       type : String,
-      default : 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png'
+      default : 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+      validate: {
+        validator : (url : string) => URL_REGEX.test(url),
+        message: "Wrong avatar url"
+      }
     },
     email : {
       type : String,
@@ -40,6 +45,7 @@ const userSchema = new mongoose.Schema({
     password : {
       type : String,
       required : true,
+      select : false
     }
 })
 

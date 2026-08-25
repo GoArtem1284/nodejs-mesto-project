@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import bcrypt from 'bcryptjs';
 import User from "../models/user";
 import jwt from 'jsonwebtoken'
+import { AppError } from "errors";
 
 const { JWT_SECRET = 'default' } = process.env;
 
@@ -26,6 +27,22 @@ interface ILoginRequest {
   email : string,
   password: string
 }
+
+export const getCurrentUser = async (req : Request, res : Response, next: NextFunction) => {
+  try {
+    const user = await User.findById(req.user!._id);
+
+    if (!user) {
+      const error : any = new Error('There is no such user');
+      (error as any).statusCode = 404;
+      throw error
+    }
+
+    res.send(user)
+  } catch (error) {
+    next(error)
+  }
+};
 
 export const getUsers = async (req : Request, res : Response) => {
   const users = await User.find();
@@ -61,7 +78,10 @@ export const createUser = async (req:Request<{}, {}, ICreateUserRequest>, res : 
       password : hash
     })
 
-    res.status(201).send(user)
+    const userObject = user.toObject();
+    const {password : userPassword, ...userWithoutPassword } =  userObject
+
+    res.status(201).send(userWithoutPassword)
   } catch (err) {
     next(err);
   }
@@ -83,16 +103,16 @@ export const login = async (req: Request<{}, {}, ILoginRequest>, res : Response,
   try {
     const {email, password} = req.body
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email }).select('+password')
 
     if (!user) {
-      return res.status(401).send({ message : 'Wrong email or passwod'})
+      return next(new AppError('Wrong email or passwod', 401))
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password)
 
     if (!isPasswordValid) {
-      return res.status(401).send({message : 'Wrong email or passwod'})
+      return next(new AppError('Wrong email or passwod', 401))
     }
 
     const token : string = jwt.sign(
