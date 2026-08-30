@@ -149,7 +149,7 @@ export const login = async (
       expiresIn: '7d',
     });
 
-    res
+    return res
       .cookie('token', token, {
         httpOnly: true,
         sameSite: 'lax',
@@ -157,6 +157,6 @@ export const login = async (
       })
       .send({ message: 'Successful login' });
   } catch (e) {
-    next(e);
+    return next(e);
   }
 };

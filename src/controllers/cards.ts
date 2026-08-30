@@ -50,9 +50,9 @@ export const deleteCard = async (
     }
 
     const cardToDelete = await Card.findByIdAndDelete(req.params.cardId);
-    res.send(cardToDelete);
+    return res.send(cardToDelete);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 };
 
@@ -72,9 +72,9 @@ export const likeCard = async (
       (error as any).statusCode = 404;
       throw error;
     }
-    res.send(card);
+    return res.send(card);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 };
 
@@ -94,8 +94,8 @@ export const dislikeCard = async (
       (error as any).statusCode = 404;
       throw error;
     }
-    res.send(card);
+    return res.send(card);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 };

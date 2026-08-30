@@ -1,6 +1,6 @@
-import AppError from '../errors';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import AppError from '../errors';
 
 const { JWT_SECRET = 'default-secret' } = process.env;
 
@@ -16,7 +16,7 @@ export default (req: Request, res: Response, next: NextFunction) => {
   try {
     const payload = jwt.verify(token, JWT_SECRET) as { _id: string };
     req.user = payload;
-    next();
+    return next();
   } catch (e) {
     return next(new AppError('You need to be authorized', 401));
   }

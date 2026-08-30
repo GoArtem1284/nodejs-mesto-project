@@ -1,7 +1,7 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { isCelebrateError } from 'celebrate';
 
-export default (err: any, req: Request, res: Response, next: NextFunction) => {
+export default (err: any, req: Request, res: Response) => {
   if (isCelebrateError(err)) {
     const errorDetails =
       err.details.get('body') ||

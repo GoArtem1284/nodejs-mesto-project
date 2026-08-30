@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import URL_REGEX from '../utils/urlRegex';
 import validator from 'validator';
+import URL_REGEX from '../utils/urlRegex';
 
 export interface IUser {
   name: string;
