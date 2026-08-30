@@ -6,9 +6,9 @@ import { createCard, deleteCard, dislikeCard, getCards, likeCard } from './contr
 import cookieParser from 'cookie-parser';
 import auth from './middlewares/auth';
 import { requestLogger, errorLogger } from './middlewares/logger';
-import errorHandler from 'middlewares/errorHandler';
-import { validateSignIn, validateSignUp, validateUpdateAvatar, validateUpdateProfile, validateUserId } from 'validators/users';
-import { validateCardId, validateCreateCard } from 'validators/cards';
+import errorHandler from './middlewares/errorHandler';
+import { validateSignIn, validateSignUp, validateUpdateAvatar, validateUpdateProfile, validateUserId } from './validators/users';
+import { validateCardId, validateCreateCard } from './validators/cards';
 
 const PORT = 3000;
 const DB_URL = 'mongodb://localhost:27017/mestodb'

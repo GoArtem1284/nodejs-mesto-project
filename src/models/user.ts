@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { URL_REGEX } from "utils/urlRegex";
+import { URL_REGEX } from "../utils/urlRegex";
 import validator from 'validator'
 
 export interface IUser {

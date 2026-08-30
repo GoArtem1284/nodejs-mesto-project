@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import bcrypt from 'bcryptjs';
 import User from "../models/user";
 import jwt from 'jsonwebtoken'
-import { AppError } from "errors";
+import { AppError } from "../errors";
 
 const { JWT_SECRET = 'default' } = process.env;
 

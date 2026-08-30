@@ -1,5 +1,5 @@
 import mongoose, { Types } from "mongoose";
-import { URL_REGEX } from "utils/urlRegex";
+import { URL_REGEX } from "../utils/urlRegex";
 
 interface ICard {
     name: string;

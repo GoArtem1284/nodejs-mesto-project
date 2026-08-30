@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Card from "../models/card";
 import { Types } from "mongoose";
-import { AppError } from "errors";
+import { AppError } from "../errors";
 
 interface ICreateCard {
   name : string;
