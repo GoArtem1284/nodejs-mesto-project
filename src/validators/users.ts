@@ -1,5 +1,5 @@
 import { celebrate, Joi } from 'celebrate';
-import { URL_REGEX } from '../utils/urlRegex';
+import URL_REGEX from '../utils/urlRegex';
 
 const objectId = Joi.string().hex().length(24);
 
