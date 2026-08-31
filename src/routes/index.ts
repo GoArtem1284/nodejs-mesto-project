@@ -2,12 +2,13 @@ import { Router } from 'express';
 import usersRouter from './users';
 import cardsRouter from './cards';
 import auth from '../middlewares/auth';
-import { createUser } from '../controllers/users';
-import { validateCreateUser } from '../validators/users';
+import { createUser, login } from '../controllers/users';
+import { validateSignIn, validateSignUp } from '../validators/users';
 
 const router = Router();
 
-router.post('/users', validateCreateUser, createUser);
+router.post('/signup', validateSignUp, createUser);
+router.post('/signin', validateSignIn, login);
 
 router.use(auth);
 router.use('/users', usersRouter);

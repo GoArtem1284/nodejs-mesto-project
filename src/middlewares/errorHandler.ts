@@ -1,8 +1,21 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { isCelebrateError } from 'celebrate';
 import HTTP_STATUSES from '../errors/status-codes';
 
-export default (err: any, req: Request, res: Response) => {
+interface IErrorWithStatus extends Error {
+  statusCode?: number;
+  code?: number;
+}
+
+export default (
+  err: IErrorWithStatus,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (res.headersSent) {
+    return next(err);
+  }
   if (isCelebrateError(err)) {
     const errorDetails =
       err.details.get('body') ||
@@ -32,16 +45,8 @@ export default (err: any, req: Request, res: Response) => {
       .status(HTTP_STATUSES.UNAUTHORIZED)
       .send({ message: 'You need to be authorized' });
   }
-  if (err.statusCode === HTTP_STATUSES.UNAUTHORIZED) {
-    return res
-      .status(HTTP_STATUSES.UNAUTHORIZED)
-      .send({ message: err.message });
-  }
-  if (err.statusCode === HTTP_STATUSES.FORBIDDEN) {
-    return res.status(HTTP_STATUSES.FORBIDDEN).send({ message: err.message });
-  }
-  if (err.statusCode === HTTP_STATUSES.NOT_FOUND) {
-    return res.status(HTTP_STATUSES.NOT_FOUND).send({ message: err.message });
+  if (err.statusCode) {
+    return res.status(err.statusCode).send({ message: err.message });
   }
 
   return res

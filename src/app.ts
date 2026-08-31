@@ -5,8 +5,7 @@ import cookieParser from 'cookie-parser';
 import routes from './routes';
 import { requestLogger, errorLogger } from './middlewares/logger';
 import errorHandler from './middlewares/errorHandler';
-import HTTP_STATUSES from './errors/status-codes';
-import AppError from './errors';
+import { NotFoundError } from './errors';
 
 const PORT = 3000;
 const DB_URL = 'mongodb://localhost:27017/mestodb';
@@ -20,7 +19,7 @@ app.use(requestLogger);
 app.use(routes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  next(new AppError('Recource not exists', HTTP_STATUSES.NOT_FOUND));
+  next(new NotFoundError('Resource not exist'));
 });
 
 app.use(errorLogger);

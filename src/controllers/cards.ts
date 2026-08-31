@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { Types } from 'mongoose';
 import Card from '../models/card';
-import AppError from '../errors';
+import { ForbiddenError, NotFoundError } from '../errors';
 import HTTP_STATUSES from '../errors/status-codes';
 
 interface ICreateCard {
@@ -52,20 +52,13 @@ export const deleteCard = async (
     const card = await Card.findById(req.params.cardId);
 
     if (!card) {
-      return next(
-        new AppError('There is no such card', HTTP_STATUSES.NOT_FOUND),
-      );
+      return next(new NotFoundError('There is no such card'));
     }
 
     const isNotOwner = card.owner.toString() !== req.user!._id.toString();
 
     if (isNotOwner) {
-      return next(
-        new AppError(
-          'You have no rights to delete this card',
-          HTTP_STATUSES.FORBIDDEN,
-        ),
-      );
+      return next(new ForbiddenError('You have no rights to delete this card'));
     }
 
     await card.deleteOne();
@@ -87,9 +80,7 @@ export const likeCard = async (
       { new: true },
     );
     if (!card) {
-      return next(
-        new AppError('No card with such _id', HTTP_STATUSES.NOT_FOUND),
-      );
+      return next(new NotFoundError('No card with such _id'));
     }
     return res.status(HTTP_STATUSES.SUCCESS).send(card);
   } catch (err) {
@@ -109,9 +100,7 @@ export const dislikeCard = async (
       { new: true },
     );
     if (!card) {
-      return next(
-        new AppError('No card with such _id', HTTP_STATUSES.NOT_FOUND),
-      );
+      return next(new NotFoundError('No card with such _id'));
     }
     return res.status(HTTP_STATUSES.SUCCESS).send(card);
   } catch (err) {

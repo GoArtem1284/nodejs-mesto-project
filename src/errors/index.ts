@@ -1,8 +1,5 @@
-export default class AppError extends Error {
-  statusCode: number;
-
-  constructor(message: string, statusCode: number) {
-    super(message);
-    this.statusCode = statusCode;
-  }
-}
+export { default as BadRequestError } from './bad-request-error';
+export { default as UnauthorizedError } from './unauthorized-error';
+export { default as ForbiddenError } from './forbidden-error';
+export { default as NotFoundError } from './not-found-error';
+export { default as ConflictError } from './conflict-error';
