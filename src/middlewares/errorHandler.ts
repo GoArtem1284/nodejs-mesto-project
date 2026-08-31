@@ -9,7 +9,7 @@ export default (err: any, req: Request, res: Response) => {
       err.details.get('params') ||
       err.details.get('headers');
     const message = errorDetails?.message ?? 'Переданы некорректные данные';
-    return res.status(400).send({ message });
+    return res.status(HTTP_STATUSES.BAD_REQUEST).send({ message });
   }
 
   if (err.name === 'ValidationError') {

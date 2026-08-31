@@ -15,7 +15,7 @@ const DB_URL = 'mongodb://localhost:27017/mestodb';
 
 const app = express();
 
-app.listen(PORT, () => console.log('IM IN!!!'));
+app.listen(PORT);
 
 app.use(express.json());
 app.use(cookieParser());
@@ -32,7 +32,4 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(errorLogger);
 app.use(errorHandler);
 
-mongoose
-  .connect(DB_URL)
-  .then(() => console.log('Base connected!'))
-  .catch((e) => console.log(`Connection error! ${e}`));
+mongoose.connect(DB_URL);

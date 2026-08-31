@@ -27,9 +27,9 @@ export const getCurrentUser = async (
     const user = await User.findById(req.user!._id);
 
     if (!user) {
-      const error: any = new Error('There is no such user');
-      (error as any).statusCode = HTTP_STATUSES.NOT_FOUND;
-      throw error;
+      return next(
+        new AppError('There is no such user', HTTP_STATUSES.NOT_FOUND),
+      );
     }
 
     res.send(user);
@@ -81,7 +81,7 @@ export const createUser = async (
   try {
     const { name, about, avatar } = req.body;
     const user = await User.create({ name, about, avatar });
-    return res.status(201).send(user);
+    return res.status(HTTP_STATUSES.CREATED).send(user);
   } catch (err) {
     return next(err);
   }
