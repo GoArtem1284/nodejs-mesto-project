@@ -1,3 +1,4 @@
+import { Router } from 'express';
 import {
   createCard,
   deleteCard,
@@ -5,7 +6,6 @@ import {
   getCards,
   likeCard,
 } from '../controllers/cards';
-import { Router } from 'express';
 import { validateCardId, validateCreateCard } from '../validators/cards';
 
 const router = Router();

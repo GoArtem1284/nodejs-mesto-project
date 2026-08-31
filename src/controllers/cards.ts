@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { Types } from 'mongoose';
 import Card from '../models/card';
 import AppError from '../errors';
-import { HTTP_STATUSES } from '../errors/status-codes';
+import HTTP_STATUSES from '../errors/status-codes';
 
 interface ICreateCard {
   name: string;
@@ -23,7 +23,7 @@ export const createCard = async (
       owner: new Types.ObjectId(req.user!._id),
     });
 
-    return res.status(HTTP_STATUSES.SUCCESS).send(card);
+    return res.status(HTTP_STATUSES.CREATED).send(card);
   } catch (err) {
     return next(err);
   }
@@ -37,7 +37,7 @@ export const getCards = async (
   try {
     const cards = await Card.find();
 
-    return res.send(cards);
+    return res.status(HTTP_STATUSES.SUCCESS).send(cards);
   } catch (err) {
     return next(err);
   }
@@ -68,8 +68,8 @@ export const deleteCard = async (
       );
     }
 
-    const cardToDelete = await Card.findByIdAndDelete(req.params.cardId);
-    return res.send(cardToDelete);
+    await card.deleteOne();
+    return res.status(HTTP_STATUSES.SUCCESS).send(card);
   } catch (err) {
     return next(err);
   }
@@ -91,7 +91,7 @@ export const likeCard = async (
         new AppError('No card with such _id', HTTP_STATUSES.NOT_FOUND),
       );
     }
-    return res.send(card);
+    return res.status(HTTP_STATUSES.SUCCESS).send(card);
   } catch (err) {
     return next(err);
   }
@@ -113,7 +113,7 @@ export const dislikeCard = async (
         new AppError('No card with such _id', HTTP_STATUSES.NOT_FOUND),
       );
     }
-    return res.send(card);
+    return res.status(HTTP_STATUSES.SUCCESS).send(card);
   } catch (err) {
     return next(err);
   }

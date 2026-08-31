@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { isCelebrateError } from 'celebrate';
-import { HTTP_STATUSES } from '../errors/status-codes';
+import HTTP_STATUSES from '../errors/status-codes';
 
 export default (err: any, req: Request, res: Response) => {
   if (isCelebrateError(err)) {
@@ -46,5 +46,5 @@ export default (err: any, req: Request, res: Response) => {
 
   return res
     .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR)
-    .send({ message: 'Server error' });
+    .send({ message: 'На сервере произошла ошибка' });
 };

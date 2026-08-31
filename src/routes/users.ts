@@ -1,3 +1,4 @@
+import { Router } from 'express';
 import {
   getCurrentUser,
   getUserById,
@@ -5,7 +6,6 @@ import {
   udapteAvatar,
   updateUser,
 } from '../controllers/users';
-import { Router } from 'express';
 import {
   validateUpdateAvatar,
   validateUpdateProfile,

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import User from '../models/user';
 import AppError from '../errors';
-import { HTTP_STATUSES } from '../errors/status-codes';
+import HTTP_STATUSES from '../errors/status-codes';
 
 interface ICreateUserRequest {
   name: string;
@@ -32,9 +32,9 @@ export const getCurrentUser = async (
       );
     }
 
-    res.send(user);
+    return res.status(HTTP_STATUSES.SUCCESS).send(user);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -45,10 +45,6 @@ export const getUsers = async (
 ) => {
   try {
     const users = await User.find();
-
-    if (!users) {
-      return next(new AppError('There is no users', HTTP_STATUSES.NOT_FOUND));
-    }
 
     return res.status(HTTP_STATUSES.SUCCESS).send(users);
   } catch (err) {
@@ -103,7 +99,7 @@ export const updateUser = async (
       return next(new AppError('User not found', HTTP_STATUSES.NOT_FOUND));
     }
 
-    return res.send(user);
+    return res.status(HTTP_STATUSES.SUCCESS).send(user);
   } catch (err) {
     return next(err);
   }
@@ -125,7 +121,7 @@ export const udapteAvatar = async (
       return next(new AppError('User not found', HTTP_STATUSES.NOT_FOUND));
     }
 
-    return res.send(user);
+    return res.status(HTTP_STATUSES.SUCCESS).send(user);
   } catch (err) {
     return next(err);
   }
