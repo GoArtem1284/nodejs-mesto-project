@@ -1,18 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import User from '../models/user';
 import AppError from '../errors';
 import { HTTP_STATUSES } from '../errors/status-codes';
 
-const { JWT_SECRET = 'default' } = process.env;
-
 interface ICreateUserRequest {
-  name?: string;
-  about?: string;
-  avatar?: string;
-  email: string;
-  password: string;
+  name: string;
+  about: string;
+  avatar: string;
 }
 
 interface IUpdateProfileRequest {
@@ -22,11 +16,6 @@ interface IUpdateProfileRequest {
 
 interface IUpdateAvatarRequest {
   avatar: string;
-}
-
-interface ILoginRequest {
-  email: string;
-  password: string;
 }
 
 export const getCurrentUser = async (
@@ -90,24 +79,11 @@ export const createUser = async (
   next: NextFunction,
 ) => {
   try {
-    const { email, password, name, about, avatar } = req.body;
-
-    const hash = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      about,
-      avatar,
-      email,
-      password: hash,
-    });
-
-    const userObject = user.toObject();
-    const { password: userPassword, ...userWithoutPassword } = userObject;
-
-    res.status(HTTP_STATUSES.SUCCESS).send(userWithoutPassword);
+    const { name, about, avatar } = req.body;
+    const user = await User.create({ name, about, avatar });
+    return res.status(201).send(user);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 };
 
@@ -152,45 +128,5 @@ export const udapteAvatar = async (
     return res.send(user);
   } catch (err) {
     return next(err);
-  }
-};
-
-export const login = async (
-  req: Request<{}, {}, ILoginRequest>,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email }).select('+password');
-
-    if (!user) {
-      return next(
-        new AppError('Wrong email or passwod', HTTP_STATUSES.UNAUTHORIZED),
-      );
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return next(
-        new AppError('Wrong email or passwod', HTTP_STATUSES.UNAUTHORIZED),
-      );
-    }
-
-    const token: string = jwt.sign({ _id: user._id }, JWT_SECRET, {
-      expiresIn: '7d',
-    });
-
-    return res
-      .cookie('token', token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 3600000 * 24 * 7,
-      })
-      .send({ message: 'Successful login' });
-  } catch (e) {
-    return next(e);
   }
 };

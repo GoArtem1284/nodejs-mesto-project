@@ -1,15 +1,14 @@
 import 'dotenv/config';
 import express, { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
-import usersRouter from './routes/users';
-import cardsRouter from './routes/cards';
-import { createUser, login } from './controllers/users';
+import { createUser } from './controllers/users';
 import cookieParser from 'cookie-parser';
-import auth from './middlewares/auth';
+import routes from './routes';
 import { requestLogger, errorLogger } from './middlewares/logger';
 import errorHandler from './middlewares/errorHandler';
-import { validateSignIn, validateSignUp } from './validators/users';
 import { HTTP_STATUSES } from './errors/status-codes';
+import { validateCreateUser } from './validators/users';
+import AppError from './errors';
 
 const PORT = 3000;
 const DB_URL = 'mongodb://localhost:27017/mestodb';
@@ -22,37 +21,16 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(requestLogger);
 
-app.post('/signin', validateSignIn, login);
-app.post('/signup', validateSignUp, createUser);
+app.post('/users', validateCreateUser, createUser);
 
-app.use(auth);
-app.use('/users', usersRouter);
-app.use('/cards', cardsRouter);
+app.use(routes);
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  next(new AppError('Recource not exists', HTTP_STATUSES.NOT_FOUND));
+});
 
 app.use(errorLogger);
 app.use(errorHandler);
-
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  const { name } = err;
-
-  if (name === 'ValidationError') {
-    return res
-      .status(HTTP_STATUSES.BAD_REQUEST)
-      .send({ message: err.message || 'Validation error' });
-  }
-
-  if (name === 'CastError') {
-    return res.status(HTTP_STATUSES.BAD_REQUEST).send({ message: 'Wrong _id' });
-  }
-
-  if (err.statusCode === HTTP_STATUSES.NOT_FOUND) {
-    return res.status(HTTP_STATUSES.NOT_FOUND).send({ message: err.message });
-  }
-
-  return res
-    .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR)
-    .send({ message: 'Server error' + err });
-});
 
 mongoose
   .connect(DB_URL)
