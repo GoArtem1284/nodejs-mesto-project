@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user';
 import AppError from '../errors';
+import { HTTP_STATUSES } from '../errors/status-codes';
 
 const { JWT_SECRET = 'default' } = process.env;
 
@@ -38,7 +39,7 @@ export const getCurrentUser = async (
 
     if (!user) {
       const error: any = new Error('There is no such user');
-      (error as any).statusCode = 404;
+      (error as any).statusCode = HTTP_STATUSES.NOT_FOUND;
       throw error;
     }
 
@@ -48,10 +49,22 @@ export const getCurrentUser = async (
   }
 };
 
-export const getUsers = async (req: Request, res: Response) => {
-  const users = await User.find();
+export const getUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const users = await User.find();
 
-  res.send(users);
+    if (!users) {
+      return next(new AppError('There is no users', HTTP_STATUSES.NOT_FOUND));
+    }
+
+    return res.status(HTTP_STATUSES.SUCCESS).send(users);
+  } catch (err) {
+    return next(err);
+  }
 };
 
 export const getUserById = async (
@@ -62,13 +75,12 @@ export const getUserById = async (
   try {
     const user = await User.findById(req.params.userId);
     if (!user) {
-      const error = new Error('User not found');
-      (error as any).statusCode = 404;
-      throw error;
+      return next(new AppError('User not found', HTTP_STATUSES.NOT_FOUND));
     }
-    res.send(user);
+
+    return res.status(HTTP_STATUSES.SUCCESS).send(user);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 };
 
@@ -93,7 +105,7 @@ export const createUser = async (
     const userObject = user.toObject();
     const { password: userPassword, ...userWithoutPassword } = userObject;
 
-    res.status(201).send(userWithoutPassword);
+    res.status(HTTP_STATUSES.SUCCESS).send(userWithoutPassword);
   } catch (err) {
     next(err);
   }
@@ -102,27 +114,45 @@ export const createUser = async (
 export const updateUser = async (
   req: Request<{}, {}, IUpdateProfileRequest>,
   res: Response,
+  next: NextFunction,
 ) => {
-  const user = await User.findByIdAndUpdate(
-    req.user!._id,
-    { name: req.body.name, about: req.body.about },
-    { new: true, runValidators: true },
-  );
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user!._id,
+      { name: req.body.name, about: req.body.about },
+      { new: true, runValidators: true },
+    );
 
-  res.send(user);
+    if (!user) {
+      return next(new AppError('User not found', HTTP_STATUSES.NOT_FOUND));
+    }
+
+    return res.send(user);
+  } catch (err) {
+    return next(err);
+  }
 };
 
 export const udapteAvatar = async (
   req: Request<{}, {}, IUpdateAvatarRequest>,
   res: Response,
+  next: NextFunction,
 ) => {
-  const user = await User.findByIdAndUpdate(
-    req.user!._id,
-    { avatar: req.body.avatar },
-    { new: true, runValidators: true },
-  );
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user!._id,
+      { avatar: req.body.avatar },
+      { new: true, runValidators: true },
+    );
 
-  res.send(user);
+    if (!user) {
+      return next(new AppError('User not found', HTTP_STATUSES.NOT_FOUND));
+    }
+
+    return res.send(user);
+  } catch (err) {
+    return next(err);
+  }
 };
 
 export const login = async (
@@ -136,13 +166,17 @@ export const login = async (
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
-      return next(new AppError('Wrong email or passwod', 401));
+      return next(
+        new AppError('Wrong email or passwod', HTTP_STATUSES.UNAUTHORIZED),
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return next(new AppError('Wrong email or passwod', 401));
+      return next(
+        new AppError('Wrong email or passwod', HTTP_STATUSES.UNAUTHORIZED),
+      );
     }
 
     const token: string = jwt.sign({ _id: user._id }, JWT_SECRET, {

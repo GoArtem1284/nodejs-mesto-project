@@ -9,11 +9,7 @@ import auth from './middlewares/auth';
 import { requestLogger, errorLogger } from './middlewares/logger';
 import errorHandler from './middlewares/errorHandler';
 import { validateSignIn, validateSignUp } from './validators/users';
-import {
-  BAD_REQUEST,
-  INTERNAL_SERVER_ERROR,
-  NOT_FOUND,
-} from './errors/status-codes';
+import { HTTP_STATUSES } from './errors/status-codes';
 
 const PORT = 3000;
 const DB_URL = 'mongodb://localhost:27017/mestodb';
@@ -41,20 +37,20 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
   if (name === 'ValidationError') {
     return res
-      .status(BAD_REQUEST)
+      .status(HTTP_STATUSES.BAD_REQUEST)
       .send({ message: err.message || 'Validation error' });
   }
 
   if (name === 'CastError') {
-    return res.status(BAD_REQUEST).send({ message: 'Wrong _id' });
+    return res.status(HTTP_STATUSES.BAD_REQUEST).send({ message: 'Wrong _id' });
   }
 
-  if (err.statusCode === NOT_FOUND) {
-    return res.status(NOT_FOUND).send({ message: err.message });
+  if (err.statusCode === HTTP_STATUSES.NOT_FOUND) {
+    return res.status(HTTP_STATUSES.NOT_FOUND).send({ message: err.message });
   }
 
   return res
-    .status(INTERNAL_SERVER_ERROR)
+    .status(HTTP_STATUSES.INTERNAL_SERVER_ERROR)
     .send({ message: 'Server error' + err });
 });
 

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { Types } from 'mongoose';
 import Card from '../models/card';
 import AppError from '../errors';
+import { HTTP_STATUSES } from '../errors/status-codes';
 
 interface ICreateCard {
   name: string;
@@ -11,22 +12,35 @@ interface ICreateCard {
 export const createCard = async (
   req: Request<{}, {}, ICreateCard>,
   res: Response,
+  next: NextFunction,
 ) => {
-  const { name, link } = req.body;
+  try {
+    const { name, link } = req.body;
 
-  const card = await Card.create({
-    name,
-    link,
-    owner: new Types.ObjectId(req.user!._id),
-  });
+    const card = await Card.create({
+      name,
+      link,
+      owner: new Types.ObjectId(req.user!._id),
+    });
 
-  res.status(201).send(card);
+    return res.status(HTTP_STATUSES.SUCCESS).send(card);
+  } catch (err) {
+    return next(err);
+  }
 };
 
-export const getCards = async (req: Request, res: Response) => {
-  const cards = await Card.find();
+export const getCards = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const cards = await Card.find();
 
-  res.send(cards);
+    return res.send(cards);
+  } catch (err) {
+    return next(err);
+  }
 };
 
 export const deleteCard = async (
@@ -38,15 +52,20 @@ export const deleteCard = async (
     const card = await Card.findById(req.params.cardId);
 
     if (!card) {
-      const error: any = new Error('There is no such card');
-      (error as any).statusCode = 404;
-      throw error;
+      return next(
+        new AppError('There is no such card', HTTP_STATUSES.NOT_FOUND),
+      );
     }
 
     const isNotOwner = card.owner.toString() !== req.user!._id.toString();
 
     if (isNotOwner) {
-      return next(new AppError('You have no rights to delete this card', 403));
+      return next(
+        new AppError(
+          'You have no rights to delete this card',
+          HTTP_STATUSES.FORBIDDEN,
+        ),
+      );
     }
 
     const cardToDelete = await Card.findByIdAndDelete(req.params.cardId);
@@ -68,9 +87,9 @@ export const likeCard = async (
       { new: true },
     );
     if (!card) {
-      const error = new Error('No card with such _id');
-      (error as any).statusCode = 404;
-      throw error;
+      return next(
+        new AppError('No card with such _id', HTTP_STATUSES.NOT_FOUND),
+      );
     }
     return res.send(card);
   } catch (err) {
@@ -90,9 +109,9 @@ export const dislikeCard = async (
       { new: true },
     );
     if (!card) {
-      const error = new Error('No card with such _id');
-      (error as any).statusCode = 404;
-      throw error;
+      return next(
+        new AppError('No card with such _id', HTTP_STATUSES.NOT_FOUND),
+      );
     }
     return res.send(card);
   } catch (err) {
